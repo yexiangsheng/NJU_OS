@@ -16,7 +16,7 @@ static inline void numeric_sort()
 {
 }
 
-int pstree(int argc, char *argv[])
+int parse_arg(int argc, char *argv[])
 {
   static struct option long_options[] = {
       {"version", no_argument, NULL, 'V'},
