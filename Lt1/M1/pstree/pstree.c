@@ -5,14 +5,14 @@
 #include <getopt.h>
 #include "pstree.h"
 
-void print_version()
+static inline void print_version()
 {
   fprintf(stdout, "pstree (PSmisc) %s", version);
 }
-void show_pids()
+static inline void show_pids()
 {
 }
-void numeric_sort()
+static inline void numeric_sort()
 {
 }
 
@@ -29,7 +29,7 @@ int pstree(int argc, char *argv[])
     switch (opt)
     {
     case 'V':
-      version();
+      print_version();
       break;
     case 'p':
       break;

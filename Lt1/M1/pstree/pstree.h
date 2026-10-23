@@ -2,9 +2,9 @@
 #define __PSTREE_H__
 
 static char *version = "0.1.1";
-void print_version();
-void show_pids();
-void numeric_sort();
-int parse_arg(int argc, char *argv[]);
+static inline void print_version();
+static inline void show_pids();
+static inline void numeric_sort();
+static inline int parse_arg(int argc, char *argv[]);
 
 #endif
