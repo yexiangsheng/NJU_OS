@@ -9,7 +9,10 @@ static inline void print_version()
 {
   fprintf(stdout, "pstree (PSmisc) %s", version);
 }
-static inline void show_pids()
+void get_info()
+{
+}
+void show_pids()
 {
 }
 static inline void numeric_sort()
@@ -53,7 +56,7 @@ int main(int argc, char *argv[])
   assert(!argv[argc]);
 
   // 1. getopt解析参数
-  if (argc != 0)
+  if (argc != 1)
   {
     parse_arg(argc, argv);
   }
