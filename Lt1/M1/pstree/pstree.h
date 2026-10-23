@@ -1,10 +1,14 @@
 #ifndef __PSTREE_H__
 #define __PSTREE_H__
 
-static char *version = "0.1.1";
-static inline void print_version();
-static inline void show_pids();
-static inline void numeric_sort();
-static inline int parse_arg(int argc, char *argv[]);
+typedef struct
+{
+  int pid;
+  int ppid;
+  char name[256];
+} proc_info;
+
+void print_version(void);
+int parse_arg(int argc, char *argv[]);
 
 #endif
