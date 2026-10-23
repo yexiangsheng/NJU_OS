@@ -5,7 +5,7 @@
 #include <getopt.h>
 #include "pstree.h"
 
-void version()
+void print_version()
 {
   fprintf(stdout, "pstree (PSmisc) %s", version);
 }
