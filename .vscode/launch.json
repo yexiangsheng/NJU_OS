@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "调试 test_strcpy",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/abstract-machine/klib/tests/test_strcpy",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/abstract-machine/klib/tests",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "setupCommands": [
+        { "text": "-enable-pretty-printing", "ignoreFailures": true }
+      ],
+      "preLaunchTask": "编译 test_strcpy"
+    },
+    {
+      "name": "调试 test_strlen",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/abstract-machine/klib/tests/test_strlen",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/abstract-machine/klib/tests",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "setupCommands": [
+        { "text": "-enable-pretty-printing", "ignoreFailures": true }
+      ],
+      "preLaunchTask": "编译 test_strlen"
+    }
+  ]
+}
