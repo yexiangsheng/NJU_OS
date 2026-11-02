@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "编译 test_strcpy",
+      "type": "shell",
+      "command": "gcc -g -fno-builtin -I../include -I../../am/include -DARCH_H='\"arch/native.h\"' -o test_strcpy test_strcpy.c ../src/string.c",
+      "options": { "cwd": "${workspaceFolder}/abstract-machine/klib/tests" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "编译 test_strlen",
+      "type": "shell",
+      "command": "gcc -g -fno-builtin -I../include -I../../am/include -DARCH_H='\"arch/native.h\"' -o test_strlen test_strlen.c ../src/string.c",
+      "options": { "cwd": "${workspaceFolder}/abstract-machine/klib/tests" },
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}
