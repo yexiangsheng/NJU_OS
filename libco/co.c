@@ -13,7 +13,7 @@ enum status
 
 struct co
 {
-  char *name;
+  const char *name;
   // pthread_t *thread;
   void (*entry)(void *);
   void *args;
