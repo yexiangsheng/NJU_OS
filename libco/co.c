@@ -28,6 +28,7 @@ struct co *cur_co;
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
 {
   struct co *th = (struct co *)malloc(sizeof(struct co));
+  assert(th != NULL);
   th->name = name;
   th->entry = func;
   th->args = arg;
