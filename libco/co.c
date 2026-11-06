@@ -1,5 +1,6 @@
 #include "co.h"
 #include <stdlib.h>
+#include <assert.h>
 #define NTHREAD 64
 
 enum status
