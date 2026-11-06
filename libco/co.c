@@ -42,7 +42,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
 // 然后返回当当前协程
 void co_wait(struct co *co)
 {
-  assert(cur_co->name != "current");
+  assert(cur_co->name != NULL);
   cur_co = co;
   assert(co->statu != T_DEAD);
   co->entry(co->args);
