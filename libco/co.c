@@ -10,12 +10,6 @@ enum status
   T_DEAD
 };
 
-typedef struct
-{
-  int stack[4068];
-  Context regs;
-} Stack_and_Regs;
-
 struct co
 {
   char *name;
@@ -24,7 +18,6 @@ struct co
   void *args;
   int statu;
   int id;
-  Stack_and_Regs context; // 每个协程都有自己的stack & regs
 };
 
 struct co co_pool[NTHREAD];
@@ -40,8 +33,6 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
   th->statu = T_WAITTING;
   co_pool[co_idx++] = *th;
   th->id = co_idx;
-  th->context.regs.rip = func;
-  th->context.regs.rsp = th->context.stack;
 
   return th;
 }
