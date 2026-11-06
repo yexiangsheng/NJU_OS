@@ -54,7 +54,7 @@ void co_wait(struct co *co)
 // 并且从当前T_WAITTING中随机选择一个协程执行
 void co_yield()
 {
-  struct co *wait_co;
+  struct co *wait_co = NULL;
   int i = 0;
   for (struct co *th = co_pool; (th->id = co_idx) < NTHREAD; th++)
   {
