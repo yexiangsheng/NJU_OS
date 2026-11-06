@@ -22,7 +22,7 @@ struct co
 
 struct co co_pool[NTHREAD];
 int co_idx = 0;
-struct co *cur_co = (struct co *){"current", NULL, NULL, 0, 0};
+struct co *cur_co = (struct co *){NULL, NULL, NULL, 0, 0};
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
 {
