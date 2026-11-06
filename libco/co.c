@@ -12,7 +12,7 @@ enum status
 
 struct co
 {
-  char name[8];
+  char *name;
   // pthread_t *thread;
   void (*entry)(void *);
   void *args;
@@ -22,7 +22,7 @@ struct co
 
 struct co co_pool[NTHREAD];
 int co_idx = 0;
-struct co *cur_co = (struct co *){NULL, NULL, NULL, 0, 0};
+struct co *cur_co;
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
 {
