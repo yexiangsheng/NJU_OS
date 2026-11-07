@@ -83,7 +83,7 @@ static int next_runnable(void)
   for (int k = 1; k <= NTHREAD; k++)
   {
     int i = (cur + k) % NTHREAD; // cur == -1 时从 0 开始
-    printf("i = %d", i);
+    printf("i = %d\n", i);
     if (i < co_cnt &&
         (co_pool[i].status == T_NEW || co_pool[i].status == T_RUNNABLE))
     {
