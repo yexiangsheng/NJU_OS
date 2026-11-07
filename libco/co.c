@@ -94,7 +94,7 @@ void co_yield ()
   assert(i != 0);
   int select_idx = 64 % i;
   cur_co = &co_pool[select_idx];
-  stack_switch_call(&cur_co->stack, cur_co->entry, cur_co->args);
+  stack_switch_call(&cur_co->stack, cur_co->entry, (uintptr_t)cur_co->args);
   longjmp(cur_co->context);
   cur_co->statu = T_RUNNING;
   cur_co->entry(cur_co->args);
