@@ -31,7 +31,7 @@ struct co
   uint8_t stack[STACK_SIZE] __attribute__((aligned(16))); // stack
 };
 
-struct co co_pool[NTHREAD];          // 协程池
+struct co *co_pool[NTHREAD];         // 协程池（存指针，对象本体在堆上，全程只有一份）
 int co_cnt = 0;                      // 已创建的协程数（槽位只增不复用，测试 6 个足够）
 int cur = -1;                        // ???当前运行的协程下标；-1 表示 main
 static jmp_buf main_ctx;             // ???main 在 co_wait 中让出 CPU 时保存的现场
@@ -84,8 +84,8 @@ static int next_runnable(void)
   {
     int i = (cur + k) % NTHREAD; // cur == -1 时从 0 开始
     // printf("i = %d\n", i);
-    if (i < co_cnt &&
-        (co_pool[i].status == T_NEW || co_pool[i].status == T_RUNNABLE))
+    if (i < co_cnt && co_pool[i] != NULL &&
+        (co_pool[i]->status == T_NEW || co_pool[i]->status == T_RUNNABLE))
     {
       return i;
     }
@@ -97,7 +97,7 @@ static int next_runnable(void)
 // 新协程第一次在自己的栈上启动；老协程恢复到它上次 co_yield 的地方。
 static void switch_to(int i)
 {
-  struct co *co = &co_pool[i];
+  struct co *co = co_pool[i];
   int is_new = (co->status == T_NEW);
   co->status = T_RUNNING; // 由于协程没有中断的说法，所以switch_to就相当于RUNNING
   cur = i;
@@ -130,8 +130,9 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
   co->name = name;
   co->entry = func;
   co->args = arg;
-  co->status = T_NEW; // 为什么要有T_NEW的类型?
-  co_pool[co_cnt++] = *co;
+  co->status = T_NEW; // 为什么要有T_NEW的类型? → 区分“首次启动”和“恢复”，见 switch_to
+  co->waiter = NULL;
+  co_pool[co_cnt++] = co; // 池里只存指针，杜绝两份对象
   return co;
 }
 
@@ -156,6 +157,16 @@ void co_wait(struct co *co)
     // 被协程 longjmp 回来后，重新检查目标状态
   }
   main_waits = NULL;
+  // 回收：先把槽位从池中摘掉再 free，调度器从此扫不到它
+  // （free 后的内存可能被后续 malloc 复用，若槽位还在，状态字段会读到垃圾）
+  for (int i = 0; i < co_cnt; i++)
+  {
+    if (co_pool[i] == co)
+    {
+      co_pool[i] = NULL;
+      break;
+    }
+  }
   free(co);
 }
 
@@ -170,11 +181,11 @@ void co_yield()
   int self = cur;
   assert(self >= 0); // co_yield 只应在协程里调用
 
-  if (setjmp(co_pool[self].context) == 0)
+  if (setjmp(co_pool[self]->context) == 0)
   {
-    if (co_pool[self].status == T_RUNNING)
+    if (co_pool[self]->status == T_RUNNING)
     {
-      co_pool[self].status = T_RUNNABLE;
+      co_pool[self]->status = T_RUNNABLE;
     }
     // 死协程的最后一次 yield 保持 T_DEAD，不会被再次调度
 
