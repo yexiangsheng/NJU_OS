@@ -156,6 +156,7 @@ void co_wait(struct co *co)
     // 被协程 longjmp 回来后，重新检查目标状态
   }
   main_waits = NULL;
+  free(co);
 }
 
 // work:退出当前协程
