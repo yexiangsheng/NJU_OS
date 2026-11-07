@@ -1,6 +1,7 @@
 #include "co.h"
 #include <assert.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include <stdlib.h>
 #define NTHREAD 64
 #define STACK_SIZE 4096
