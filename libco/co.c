@@ -1,5 +1,6 @@
 #include "co.h"
 #include <assert.h>
+#include <stdio.h>
 #include <setjmp.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -82,6 +83,7 @@ static int next_runnable(void)
   for (int k = 1; k <= NTHREAD; k++)
   {
     int i = (cur + k) % NTHREAD; // cur == -1 时从 0 开始
+    printf("i = %d", i);
     if (i < co_cnt &&
         (co_pool[i].status == T_NEW || co_pool[i].status == T_RUNNABLE))
     {
