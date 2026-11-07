@@ -11,10 +11,10 @@
 
 enum status
 {
-  T_NEW = 1,  // 已创建，还没在自己的栈上运行过
-  T_RUNNABLE, // 已启动，在 co_yield 处让出 CPU，等待恢复
-  T_RUNNING,  // 正在运行（cur 指向它）
-  T_DEAD      // entry 已返回
+  T_NEW = 1,  // ???已创建，还没在自己的栈上运行过
+  T_RUNNABLE, // ???已启动，在 co_yield 处让出 CPU，等待恢复
+  T_RUNNING,  // ???正在运行（cur 指向它）
+  T_DEAD      // ???entry 已返回
 };
 
 struct co
@@ -24,15 +24,15 @@ struct co
   void *args;
   enum status status;
 
-  jmp_buf context; // 协程自己的执行现场（在它自己的 co_yield 里保存）
-  uint8_t stack[STACK_SIZE] __attribute__((aligned(16)));
+  jmp_buf context;                                        // registers
+  uint8_t stack[STACK_SIZE] __attribute__((aligned(16))); // stack
 };
 
-struct co co_pool[NTHREAD];
+struct co co_pool[NTHREAD];          // 协程池
 int co_cnt = 0;                      // 已创建的协程数（槽位只增不复用，测试 6 个足够）
-int cur = -1;                        // 当前运行的协程下标；-1 表示 main
-static jmp_buf main_ctx;             // main 在 co_wait 中让出 CPU 时保存的现场
-static struct co *main_waits = NULL; // main 的 co_wait 正在等待谁
+int cur = -1;                        // ???当前运行的协程下标；-1 表示 main
+static jmp_buf main_ctx;             // ???main 在 co_wait 中让出 CPU 时保存的现场
+static struct co *main_waits = NULL; // ???main 的 co_wait 正在等待谁
 
 // 切换registers（框架给定）
 static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
@@ -113,14 +113,17 @@ static void switch_to(int i)
   }
 }
 
+// 1. (create) use malloc to create obj in mem
+// 2. (log) initialize
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
 {
   assert(co_cnt < NTHREAD);
-  struct co *co = &co_pool[co_cnt++];
+  struct co *co = (struct co *)malloc(sizeof(struct co));
   co->name = name;
   co->entry = func;
   co->args = arg;
   co->status = T_NEW;
+  co_pool[co_cnt++] = *co;
   return co;
 }
 
