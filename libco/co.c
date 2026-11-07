@@ -1,33 +1,31 @@
 #include "co.h"
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 #define NTHREAD 64
 
-enum status
-{
+enum status {
   T_LIVE = 1,
   T_RUNNING,
   T_WAITTING,
   T_DEAD
 };
 
-struct co
-{
-  const char *name;
+struct co {
+  char* name;
   // pthread_t *thread;
-  void (*entry)(void *);
-  void *args;
+  void (*entry)(void*);
+  void* args;
   int statu;
   int id;
 };
 
 struct co co_pool[NTHREAD];
 int co_idx = 0;
-struct co *cur_co;
+struct co* cur_co;
 
-struct co *co_start(const char *name, void (*func)(void *), void *arg)
+struct co* co_start(const char* name, void (*func)(void*), void* arg)
 {
-  struct co *th = (struct co *)malloc(sizeof(struct co));
+  struct co* th = (struct co*)malloc(sizeof(struct co));
   assert(th != NULL);
   th->name = name;
   th->entry = func;
@@ -41,7 +39,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
 
 // co_wait会等待参数协程执行完成，
 // 然后返回当当前协程
-void co_wait(struct co *co)
+void co_wait(struct co* co)
 {
   assert(cur_co->name != NULL);
   cur_co = co;
@@ -51,22 +49,23 @@ void co_wait(struct co *co)
   free(co);
 }
 
-// co_yield会将当前协程的regs保留在它的stack中
-// 并且从当前T_WAITTING中随机选择一个协程执行
-void co_yield()
+// 1.为每一个协程分配独立的stack;rsp
+// 2.setjmp保存当前协程的上下文
+// 3.stack_switch_call切换到下一个协程的上下文
+// 4.longjmp恢复当前协程的上下文
+void co_yield ()
 {
-  struct co *wait_co = NULL;
+  struct co* wait_co = NULL;
   int i = 0;
-  for (struct co *th = co_pool; (th->id = co_idx) < NTHREAD; th++)
-  {
-    if (th->statu == T_WAITTING)
-    {
+  for (struct co* th = co_pool; (th->id = co_idx) < NTHREAD; th++) {
+    if (th->statu == T_WAITTING) {
       wait_co[i++] = *th;
     }
   }
   assert(i != 0);
   int select_idx = 64 % i;
   cur_co = &co_pool[select_idx];
+  stack_switch_call(stack_top(&cur_co->stack), cur_co->entry, cur_co->args);
   cur_co->entry(cur_co->args);
   cur_co->statu = T_DEAD;
 }
