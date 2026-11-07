@@ -71,7 +71,7 @@ void co_wait(struct co* co)
   // switch stack
   stack_switch_call(&cur_co->stack, cur_co->entry, (uintptr_t)cur_co->args);
   assert(co->statu != T_DEAD);
-  longjmp(co->context);
+  longjmp(co->context, 1);
   co->statu = T_RUNNING;
   co->entry(co->args);
   co->statu = T_DEAD;
@@ -95,7 +95,7 @@ void co_yield ()
   int select_idx = 64 % i;
   cur_co = &co_pool[select_idx];
   stack_switch_call(&cur_co->stack, cur_co->entry, (uintptr_t)cur_co->args);
-  longjmp(cur_co->context);
+  longjmp(cur_co->context, 1);
   cur_co->statu = T_RUNNING;
   cur_co->entry(cur_co->args);
   cur_co->statu = T_DEAD;
