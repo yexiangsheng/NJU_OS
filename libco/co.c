@@ -25,6 +25,7 @@ struct co
   void *args;
   enum status status;
 
+  struct co *waiter;                                      // 是否由其他协程在等待当前协程
   jmp_buf context;                                        // registers
   uint8_t stack[STACK_SIZE] __attribute__((aligned(16))); // stack
 };
@@ -53,28 +54,29 @@ static inline void stack_switch_call(void *sp, void *entry, uintptr_t arg)
   );
 }
 
-// 协程真正的入口包装。entry 是被 jmp 进来的，假栈上没有合法的返回地址，
-// 因此这个函数绝对不能 return：跑完 entry 后标记自己死亡，
-// 然后永远留在调度循环里（调度器不会再选中 DEAD 协程）。
+// work: entry的包装函数
+// note:协程真正的入口包装。entry 是被 jmp 进来的，假栈上没有合法的返回地址，
+//      因此这个函数绝对不能 return：跑完 entry 后标记自己死亡，
+//      然后永远留在调度循环里（调度器不会再选中 DEAD 协程）。
 static void co_wrapper(void *co_)
 {
   struct co *co = co_;
   co->entry(co->args);
   co->status = T_DEAD;
-  // 目标一死就通知 main：co_wait 不必等所有协程都停下来
-  // （否则可能死锁：别的协程活着时 main 拿不回控制权）
+  // 返回调用co_wait的函数
   if (main_waits == co)
   {
-    cur = -1;
+    cur = -1; // co_wait只能返回到main中
     longjmp(main_ctx, 1);
   }
-  for (;;)
+  // 保险操作：yield
+  while (1)
   {
     co_yield();
   }
 }
 
-// 从 cur 之后开始轮转，找一个 NEW/RUNNABLE 的协程；找不到返回 -1
+// work:从 cur 之后开始轮转，找一个 NEW/RUNNABLE 的协程；找不到返回 -1
 static int next_runnable(void)
 {
   for (int k = 1; k <= NTHREAD; k++)
@@ -89,18 +91,17 @@ static int next_runnable(void)
   return -1;
 }
 
-// 切到下标 i 的协程。此函数不会再返回到调用者的执行流：
+// work:切到下标 i 的协程。此函数不会再返回到调用者的执行流：
 // 新协程第一次在自己的栈上启动；老协程恢复到它上次 co_yield 的地方。
 static void switch_to(int i)
 {
   struct co *co = &co_pool[i];
   int is_new = (co->status == T_NEW);
-  co->status = T_RUNNING;
+  co->status = T_RUNNING; // 由于协程没有中断的说法，所以switch_to就相当于RUNNING
   cur = i;
 
   if (is_new)
   {
-    // 栈向低地址生长，必须从最高端开始用
     void *sp = co->stack + STACK_SIZE;
 #if __x86_64__
     sp -= 8; // jmp 不压返回地址，手动凑出入口处 rsp % 16 == 8，
@@ -114,8 +115,12 @@ static void switch_to(int i)
   }
 }
 
+// work:创建协程但不执行
 // 1. (create) use malloc to create obj in mem
 // 2. (log) initialize
+// eg:
+// struct co* co1=co_start("thread-1",func1,arg1)
+// struct co* co2=co_start("thread-2",func2,arg2)
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
 {
   assert(co_cnt < NTHREAD);
@@ -123,24 +128,27 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
   co->name = name;
   co->entry = func;
   co->args = arg;
-  co->status = T_NEW;
+  co->status = T_NEW; // 为什么要有T_NEW的类型?
   co_pool[co_cnt++] = *co;
   return co;
 }
 
-// co_wait 会阻塞调用者，直到参数协程执行完成（T_DEAD）才返回。
-// 本实现只支持 main 调用 co_wait（测试即如此）。
+// work:co_wait 会阻塞调用者，直到参数协程执行完成（T_DEAD）才返回。
+// 1. setjmp:保存当前协程的registers
+// 2. next_runnable:获取要切换的协程的
+// 3. switch_to:切换协程
+// note:本实现只支持 main 调用 co_wait（测试即如此）。
 void co_wait(struct co *co)
 {
-  assert(co != NULL && cur == -1);
-  while (co->status != T_DEAD)
+  assert(co != NULL && cur == -1); // cur==-1表示只能从main中调用co_wait
+  while (co->status != T_DEAD)     // ???
   {
-    main_waits = co;
-    if (setjmp(main_ctx) == 0)
+    main_waits = co;           // 可以换成waiter
+    if (setjmp(main_ctx) == 0) // setjmp(cur_ctx)
     {
       // 目标还活着 ⇒ 至少它自己是可运行的
       int next = next_runnable();
-      assert(next >= 0);
+      assert(next >= 0); // TODO: Failed???
       switch_to(next);
     }
     // 被协程 longjmp 回来后，重新检查目标状态
@@ -148,6 +156,7 @@ void co_wait(struct co *co)
   main_waits = NULL;
 }
 
+// work:退出当前协程
 // 1. 为每一个协程分配独立的 stack
 // 2. 在协程自己的执行流上 setjmp 保存上下文（保存位置的正确性是关键）
 // 3. 把自己标记为 RUNNABLE，轮转选下一个协程：
@@ -169,7 +178,7 @@ void co_yield()
     int next = next_runnable();
     if (next < 0)
     {
-      cur = -1;             // 接下来运行的是 main
+      cur = -1;             // 接下来运行的是 main ??? 需要修改成其他协程
       longjmp(main_ctx, 1); // 全部协程跑完，回到 main
     }
     switch_to(next);
