@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stddef.h>
 
 #define NTHREAD 64
